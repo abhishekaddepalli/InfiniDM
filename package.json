@@ -1,0 +1,21 @@
+{
+    "name": "infinidm-frontend",
+    "private": true,
+    "type": "module",
+    "description": "Front-end build for the Instagram extension bundles emitted to public/extensions/instagram/*. Run: npm run build",
+    "scripts": {
+        "build": "vite build --config vite.instagram.config.mjs"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.1.11",
+        "tailwindcss": "^4.1.11",
+        "vite": "^6.3.5"
+    },
+    "dependencies": {
+        "apexcharts": "^3.54.1",
+        "htm": "^3.1.1",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "toastify-js": "^1.12.0"
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "infinidm-node-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "InfiniDM standalone Node.js runtime by Infiniforge Technologies — webhook handler, flow engine, and scheduler.",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test/instagramFlowService.test.mjs && node test/instagramFlowCombinations.test.mjs"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "express": "^5.1.0",
+    "form-data": "^4.0.6"
+  },
+  "engines": {
+    "node": ">=22.7.0"
+  }
+}
