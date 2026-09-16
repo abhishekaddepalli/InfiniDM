@@ -25,3 +25,5 @@ yarn-error.log*
 /node/.env
 /node/node_modules/
 /.build-entries/
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
