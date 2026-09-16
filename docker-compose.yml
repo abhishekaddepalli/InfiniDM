@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: infinidm-web
+    restart: always
+    ports:
+      - "${PORT:-8000}:80"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_KEY=${APP_KEY}
+      - APP_URL=${APP_URL:-http://localhost:8000}
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-infinidm}
+      - DB_USERNAME=${DB_USERNAME:-infinidm_user}
+      - DB_PASSWORD=${DB_PASSWORD:-infinidm_secret}
+      - NODE_SERVER_URL=http://node-engine:3100
+      - NODE_WEBHOOK_TOKEN=${NODE_WEBHOOK_TOKEN:-local-test-token-12345}
+    depends_on:
+      - db
+      - node-engine
+    networks:
+      - infinidm-network
+
+  node-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: infinidm-node
+    restart: always
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+      - NODE_WEBHOOK_TOKEN=${NODE_WEBHOOK_TOKEN:-local-test-token-12345}
+      - LARAVEL_URL=http://web:80
+    networks:
+      - infinidm-network
+
+  db:
+    image: mysql:8.0
+    container_name: infinidm-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-infinidm}
+      MYSQL_USER: ${DB_USERNAME:-infinidm_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-infinidm_secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret_password}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - infinidm-network
+
+volumes:
+  db-data:
+
+networks:
+  infinidm-network:
+    driver: bridge

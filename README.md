@@ -60,6 +60,18 @@
 
 ---
 
+## ⚡ 1-Click Coolify Deployment
+
+InfiniDM includes full support for **[Coolify](https://coolify.io)** via GitHub & Docker Compose.
+
+1. In Coolify, create a new **Docker Compose** resource connected to this GitHub repo (`abhishekaddepalli/InfiniDM`).
+2. Add your environment variables (`APP_KEY`, `DB_PASSWORD`, `NODE_WEBHOOK_TOKEN`).
+3. Click **Deploy**! Coolify will automatically build and start the Laravel Web, Node Flow Engine, and MySQL database containers.
+
+> 📖 See **[COOLIFY.md](COOLIFY.md)** for detailed Coolify deployment instructions.
+
+---
+
 ## 🛠️ Local Development Quickstart
 
 ### 1. Clone Repository
