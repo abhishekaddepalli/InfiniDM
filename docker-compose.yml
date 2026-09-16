@@ -8,8 +8,6 @@ services:
     restart: always
     expose:
       - "80"
-    ports:
-      - "${PORT:-8000}:80"
     environment:
       - APP_ENV=${APP_ENV:-production}
       - APP_DEBUG=${APP_DEBUG:-false}
