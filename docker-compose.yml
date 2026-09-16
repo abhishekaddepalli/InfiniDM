@@ -3,10 +3,11 @@ version: '3.8'
 services:
   web:
     build:
-      context: .
+      context: https://github.com/abhishekaddepalli/InfiniDM.git#main
       dockerfile: Dockerfile.web
-    container_name: infinidm-web
     restart: always
+    expose:
+      - "80"
     ports:
       - "${PORT:-8000}:80"
     environment:
@@ -30,12 +31,11 @@ services:
 
   node-engine:
     build:
-      context: .
+      context: https://github.com/abhishekaddepalli/InfiniDM.git#main
       dockerfile: Dockerfile.node
-    container_name: infinidm-node
     restart: always
-    ports:
-      - "3100:3100"
+    expose:
+      - "3100"
     environment:
       - PORT=3100
       - NODE_WEBHOOK_TOKEN=${NODE_WEBHOOK_TOKEN:-local-test-token-12345}
@@ -45,7 +45,6 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: infinidm-db
     restart: always
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-infinidm}
