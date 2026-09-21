@@ -62,7 +62,7 @@ class InstagramSettingsController extends Controller
             'instagram_config_id'            => 'nullable|string|max:64',
             'instagram_login_type'           => 'nullable|in:facebook,instagram',
             'instagram_webhook_verify_token' => 'nullable|string|max:96',
-            'instagram_graph_version'        => 'nullable|regex:/^v\d{1,2}\.\d{1,2}$/',
+            'instagram_graph_version'        => 'nullable|string|max:20',
             'instagram_giphy_key'            => 'nullable|string|max:128',
             'node_url'                       => 'nullable|string|max:200',
             'node_token'                     => 'nullable|string|max:200',
@@ -92,21 +92,37 @@ class InstagramSettingsController extends Controller
             Setting::set('node_token', (string) $request->input('node_token'));
         }
 
-        // Mirror the Node URL + token into BOTH .env files, exactly like WaDesk:
-        //   • Laravel's own .env  → SERVER_URL + NODE_WEBHOOK_TOKEN (keys config/instagram.php reads)
-        //   • node/.env           → NODE_WEBHOOK_TOKEN (the secret the Node process validates)
-        // so whatever the admin typed here is what a fresh boot of either side uses.
+        // Mirror credentials to .env file so runtime + background services see them instantly
         $nodeUrl   = (string) ($data['node_url'] ?? '');
         $nodeToken = (string) ($request->input('node_token') ?? '');
 
-        $laravelEnv = [];
+        $laravelEnv = [
+            'INSTAGRAM_ENABLED'              => $request->boolean('instagram_enabled') ? 'true' : 'false',
+            'INSTAGRAM_APP_ID'               => (string) ($data['instagram_app_id'] ?? ''),
+            'INSTAGRAM_CONFIG_ID'            => (string) ($data['instagram_config_id'] ?? ''),
+            'INSTAGRAM_LOGIN_TYPE'           => (string) ($data['instagram_login_type'] ?? 'facebook'),
+            'INSTAGRAM_WEBHOOK_VERIFY_TOKEN' => (string) ($data['instagram_webhook_verify_token'] ?? ''),
+            'INSTAGRAM_GRAPH_VERSION'        => (string) ($data['instagram_graph_version'] ?? 'v21.0'),
+        ];
+        if (!empty($data['instagram_app_secret'])) {
+            $laravelEnv['INSTAGRAM_APP_SECRET'] = $data['instagram_app_secret'];
+        }
+        if (!empty($data['instagram_giphy_key'])) {
+            $laravelEnv['INSTAGRAM_GIPHY_KEY'] = $data['instagram_giphy_key'];
+        }
         if ($nodeUrl !== '')   { $laravelEnv['SERVER_URL'] = $nodeUrl; }
         if ($nodeToken !== '') { $laravelEnv['NODE_WEBHOOK_TOKEN'] = $nodeToken; }
+
         if ($laravelEnv) { $this->writeEnv(base_path('.env'), $laravelEnv); }
 
         if ($nodeToken !== '' && is_file(base_path('node/.env'))) {
             $this->writeEnv(base_path('node/.env'), ['NODE_WEBHOOK_TOKEN' => $nodeToken]);
         }
+
+        \Illuminate\Support\Facades\Cache::forget('instaflow.settings.all');
+        try {
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+        } catch (\Throwable $e) {}
 
         return redirect()->route('admin.settings.instagram')->with('status', 'Instagram settings saved.');
     }

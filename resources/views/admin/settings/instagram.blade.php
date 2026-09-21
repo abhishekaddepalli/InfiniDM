@@ -61,12 +61,29 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="rounded-xl px-4 py-3 text-[12.5px] font-mono mb-4 bg-accent-coral/10 border border-accent-coral/30 text-accent-coral space-y-1">
+                <div class="font-semibold flex items-center gap-2">
+                    <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="8" cy="8" r="6" />
+                        <path d="M8 5v3.5M8 11v.5" />
+                    </svg>
+                    <span>{{ __('Please correct the errors below:') }}</span>
+                </div>
+                <ul class="list-disc list-inside text-[12px] pl-5 space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form id="ig-settings-form" method="POST" action="{{ route('admin.settings.instagram.update') }}" class="space-y-5">@csrf
 
             {{-- Enable + status --}}
             <div class="bg-paper-0 border border-paper-200 rounded-2xl p-5">
                 <label class="inline-flex items-start gap-2.5 cursor-pointer">
-                    <input type="checkbox" name="instagram_enabled" value="1" @checked($settings['instagram_enabled'])
+                    <input type="checkbox" name="instagram_enabled" value="1" @checked(old('instagram_enabled', $settings['instagram_enabled']))
                         class="mt-0.5 w-4 h-4 rounded border-paper-300 text-wa-deep focus:ring-wa-deep/20">
                     <span class="text-[12.5px] text-ink-700 leading-relaxed">
                         <span class="font-semibold text-ink-900">{{ __('Enable Instagram automation platform-wide') }}</span><br>
@@ -82,7 +99,7 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('App ID') }}</span>
-                        <input name="instagram_app_id" value="{{ $settings['instagram_app_id'] }}" placeholder="123456789012345"
+                        <input name="instagram_app_id" value="{{ old('instagram_app_id', $settings['instagram_app_id']) }}" placeholder="123456789012345"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
                     <label class="block">
@@ -98,24 +115,24 @@
                     </label>
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('Login configuration ID') }}</span>
-                        <input name="instagram_config_id" value="{{ $settings['instagram_config_id'] }}" placeholder="(embedded signup / login config)"
+                        <input name="instagram_config_id" value="{{ old('instagram_config_id', $settings['instagram_config_id']) }}" placeholder="(embedded signup / login config)"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('OAuth path') }}</span>
                         <select name="instagram_login_type" class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
-                            <option value="facebook"  @selected($settings['instagram_login_type']==='facebook')>{{ __('Facebook Login for Business (multi-tenant)') }}</option>
-                            <option value="instagram" @selected($settings['instagram_login_type']==='instagram')>{{ __('Instagram Login (no FB Page)') }}</option>
+                            <option value="facebook"  @selected(old('instagram_login_type', $settings['instagram_login_type']) === 'facebook')>{{ __('Facebook Login for Business (multi-tenant)') }}</option>
+                            <option value="instagram" @selected(old('instagram_login_type', $settings['instagram_login_type']) === 'instagram')>{{ __('Instagram Login (no FB Page)') }}</option>
                         </select>
                     </label>
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('Webhook verify token') }}</span>
-                        <input name="instagram_webhook_verify_token" value="{{ $settings['instagram_webhook_verify_token'] }}" placeholder="any-secret-string"
+                        <input name="instagram_webhook_verify_token" value="{{ old('instagram_webhook_verify_token', $settings['instagram_webhook_verify_token']) }}" placeholder="any-secret-string"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('Graph API version') }}</span>
-                        <input name="instagram_graph_version" value="{{ $settings['instagram_graph_version'] }}" placeholder="v21.0"
+                        <input name="instagram_graph_version" value="{{ old('instagram_graph_version', $settings['instagram_graph_version']) }}" placeholder="v21.0"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
                 </div>
@@ -151,7 +168,7 @@
                 <div>
                     <span class="text-[11.5px] text-ink-700 block mb-1">{{ __('Verify token') }}</span>
                     <div class="flex items-stretch gap-2">
-                        <input type="text" readonly id="ig-verify-token" value="{{ $settings['instagram_webhook_verify_token'] }}"
+                        <input type="text" readonly id="ig-verify-token" value="{{ old('instagram_webhook_verify_token', $settings['instagram_webhook_verify_token']) }}"
                             placeholder="{{ __('Set a verify token in the field above, then Save changes') }}"
                             class="flex-1 rounded-xl border border-paper-200 bg-paper-50 px-3 py-2.5 text-[13px] font-mono text-ink-900 focus:outline-none">
                         <button type="button" data-copy="#ig-verify-token"
@@ -174,7 +191,7 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                     <label class="block">
                         <span class="text-[11.5px] text-ink-700">{{ __('Node URL') }}</span>
-                        <input name="node_url" type="url" value="{{ $settings['node_url'] }}" placeholder="http://127.0.0.1:3100"
+                        <input name="node_url" type="url" value="{{ old('node_url', $settings['node_url']) }}" placeholder="http://127.0.0.1:3100"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
                     <label class="block">
@@ -191,7 +208,7 @@
                     </span>
                     <span class="relative inline-block w-9 h-5 shrink-0">
                         <input type="hidden" name="enforce_plans" value="0">
-                        <input type="checkbox" name="enforce_plans" value="1" class="peer opacity-0 w-0 h-0" @checked($settings['enforce_plans'])>
+                        <input type="checkbox" name="enforce_plans" value="1" class="peer opacity-0 w-0 h-0" @checked(old('enforce_plans', $settings['enforce_plans']))>
                         <span class="absolute inset-0 bg-paper-200 rounded-full transition peer-checked:bg-wa-deep before:content-[''] before:absolute before:h-4 before:w-4 before:left-0.5 before:bottom-0.5 before:bg-paper-0 before:rounded-full before:transition peer-checked:before:translate-x-[16px]"></span>
                     </span>
                 </label>
