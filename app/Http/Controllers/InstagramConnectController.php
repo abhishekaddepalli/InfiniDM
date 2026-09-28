@@ -89,6 +89,13 @@ class InstagramConnectController extends Controller
     /** OAuth callback → store the connected account. */
     public function callback(Request $request)
     {
+        // Fail-safe: If Meta was pointed to /instagram/callback as the Webhook Callback URL,
+        // answer the subscription verification handshake instead of throwing an OAuth error.
+        $mode = $request->query('hub_mode') ?: $request->query('hub.mode');
+        if ($mode === 'subscribe' || $request->has('hub_challenge') || $request->has('hub.challenge')) {
+            return app(InstagramWebhookController::class)->verify($request);
+        }
+
         if ($request->filled('error')) {
             return redirect('/instagram')->withErrors(['instagram' => (string) $request->string('error_description')]);
         }

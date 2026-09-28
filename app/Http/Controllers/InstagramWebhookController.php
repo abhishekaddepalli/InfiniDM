@@ -23,18 +23,33 @@ class InstagramWebhookController extends Controller
     /** GET — Meta subscription handshake. */
     public function verify(Request $request)
     {
+        $mode        = $request->query('hub_mode') ?: $request->query('hub.mode');
+        $verifyToken = $request->query('hub_verify_token') ?: $request->query('hub.verify_token');
+        $challenge   = $request->query('hub_challenge') ?: $request->query('hub.challenge');
+
         $expected = (string) InstagramGate::setting('instagram_webhook_verify_token', '');
-        // DIAGNOSTIC — proves Meta reached the endpoint during subscription setup.
-        Log::info('[IG-HOOK] verify handshake', [
-            'mode'        => $request->query('hub_mode'),
-            'token_set'   => $expected !== '',
-            'token_match' => $expected !== '' && hash_equals($expected, (string) $request->query('hub_verify_token')),
-        ]);
-        if ($request->query('hub_mode') === 'subscribe'
-            && $expected !== ''
-            && hash_equals($expected, (string) $request->query('hub_verify_token'))) {
-            return response((string) $request->query('hub_challenge'), 200);
+        if ($expected === '') {
+            $expected = 'instaflow_' . \Illuminate\Support\Str::random(24);
+            InstagramGate::putSetting('instagram_webhook_verify_token', $expected, 'string', 'Verify token Meta echoes during webhook subscription.');
         }
+
+        Log::info('[IG-HOOK] verify handshake', [
+            'mode'         => $mode,
+            'verify_token' => $verifyToken,
+            'expected'     => $expected,
+            'token_match'  => $verifyToken !== null && hash_equals(trim($expected), trim((string) $verifyToken)),
+        ]);
+
+        if ($mode === 'subscribe' && $verifyToken !== null && hash_equals(trim($expected), trim((string) $verifyToken))) {
+            return response((string) $challenge, 200)->header('Content-Type', 'text/plain');
+        }
+
+        Log::warning('[IG-HOOK] verify handshake failed', [
+            'received_mode'  => $mode,
+            'received_token' => $verifyToken,
+            'expected_token' => $expected,
+        ]);
+
         return response('forbidden', 403);
     }
 

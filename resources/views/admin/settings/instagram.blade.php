@@ -126,7 +126,12 @@
                         </select>
                     </label>
                     <label class="block">
-                        <span class="text-[11.5px] text-ink-700">{{ __('Webhook verify token') }}</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11.5px] text-ink-700">{{ __('Webhook verify token') }}</span>
+                            <button type="button" data-generate-token class="text-[10.5px] font-mono text-wa-deep hover:underline cursor-pointer">
+                                {{ __('Generate New Token') }}
+                            </button>
+                        </div>
                         <input name="instagram_webhook_verify_token" value="{{ old('instagram_webhook_verify_token', $settings['instagram_webhook_verify_token']) }}" placeholder="any-secret-string"
                             class="mt-1 w-full rounded-xl border border-paper-200 bg-paper-0 px-3 py-2.5 text-[13px] font-mono focus:outline-none focus:border-wa-deep">
                     </label>
@@ -274,6 +279,16 @@
                     btn.addEventListener('click', function () {
                         var inp = btn.parentElement.querySelector('input');
                         if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+                    });
+                });
+                // Generate token button.
+                document.querySelectorAll('[data-generate-token]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var token = 'instaflow_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                        var inp = document.querySelector('input[name="instagram_webhook_verify_token"]');
+                        var readonlyInp = document.getElementById('ig-verify-token');
+                        if (inp) inp.value = token;
+                        if (readonlyInp) readonlyInp.value = token;
                     });
                 });
                 // Copy-to-clipboard buttons (webhook URL + verify token).

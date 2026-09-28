@@ -26,13 +26,22 @@ class InstagramSettingsController extends Controller
 {
     public function index(): View
     {
+        $verifyToken = (string) InstagramGate::setting('instagram_webhook_verify_token', '');
+        if ($verifyToken === '') {
+            $verifyToken = 'instaflow_' . \Illuminate\Support\Str::random(24);
+            InstagramGate::putSetting('instagram_webhook_verify_token', $verifyToken, 'string', 'Verify token Meta echoes during webhook subscription.');
+            try {
+                $this->writeEnv(base_path('.env'), ['INSTAGRAM_WEBHOOK_VERIFY_TOKEN' => $verifyToken]);
+            } catch (\Throwable $e) {}
+        }
+
         $settings = [
             'instagram_enabled'              => (bool)   InstagramGate::setting('instagram_enabled', false),
             'instagram_app_id'               => (string) InstagramGate::setting('instagram_app_id', ''),
             'instagram_app_secret_set'       => InstagramGate::settingExists('instagram_app_secret'),
             'instagram_config_id'            => (string) InstagramGate::setting('instagram_config_id', ''),
             'instagram_login_type'           => (string) InstagramGate::setting('instagram_login_type', 'facebook'),
-            'instagram_webhook_verify_token' => (string) InstagramGate::setting('instagram_webhook_verify_token', ''),
+            'instagram_webhook_verify_token' => $verifyToken,
             'instagram_graph_version'        => (string) InstagramGate::setting('instagram_graph_version', 'v21.0'),
             'instagram_giphy_key_set'        => InstagramGate::settingExists('instagram_giphy_key')
                                                     || (string) config('services.giphy.key', env('GIPHY_API_KEY', '')) !== '',
@@ -69,11 +78,19 @@ class InstagramSettingsController extends Controller
             'enforce_plans'                  => 'nullable|boolean',
         ]);
 
+        $verifyToken = (string) ($data['instagram_webhook_verify_token'] ?? '');
+        if ($verifyToken === '') {
+            $verifyToken = (string) InstagramGate::setting('instagram_webhook_verify_token', '');
+            if ($verifyToken === '') {
+                $verifyToken = 'instaflow_' . \Illuminate\Support\Str::random(24);
+            }
+        }
+
         InstagramGate::putSetting('instagram_enabled',              $request->boolean('instagram_enabled'), 'bool', 'Enable the Instagram automation channel platform-wide.');
         InstagramGate::putSetting('instagram_app_id',              (string) ($data['instagram_app_id'] ?? ''), 'string', 'Meta App ID used for Instagram OAuth + Graph API.');
         InstagramGate::putSetting('instagram_config_id',           (string) ($data['instagram_config_id'] ?? ''), 'string', 'Instagram Embedded-Signup / Login configuration ID.');
         InstagramGate::putSetting('instagram_login_type',          (string) ($data['instagram_login_type'] ?? 'facebook'), 'string', 'OAuth path: facebook (FB-Login-for-Business) or instagram (IG-Login).');
-        InstagramGate::putSetting('instagram_webhook_verify_token',(string) ($data['instagram_webhook_verify_token'] ?? ''), 'string', 'Verify token Meta echoes during webhook subscription.');
+        InstagramGate::putSetting('instagram_webhook_verify_token', $verifyToken, 'string', 'Verify token Meta echoes during webhook subscription.');
         InstagramGate::putSetting('instagram_graph_version',       (string) ($data['instagram_graph_version'] ?? 'v21.0'), 'string', 'Graph API version for Instagram calls.');
 
         // Secrets are only overwritten when the form actually carried a value —
@@ -101,7 +118,7 @@ class InstagramSettingsController extends Controller
             'INSTAGRAM_APP_ID'               => (string) ($data['instagram_app_id'] ?? ''),
             'INSTAGRAM_CONFIG_ID'            => (string) ($data['instagram_config_id'] ?? ''),
             'INSTAGRAM_LOGIN_TYPE'           => (string) ($data['instagram_login_type'] ?? 'facebook'),
-            'INSTAGRAM_WEBHOOK_VERIFY_TOKEN' => (string) ($data['instagram_webhook_verify_token'] ?? ''),
+            'INSTAGRAM_WEBHOOK_VERIFY_TOKEN' => $verifyToken,
             'INSTAGRAM_GRAPH_VERSION'        => (string) ($data['instagram_graph_version'] ?? 'v21.0'),
         ];
         if (!empty($data['instagram_app_secret'])) {
