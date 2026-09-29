@@ -94,15 +94,19 @@ class PackageController extends Controller
             'sort'            => ['nullable', 'integer'],
         ]);
 
+        $price = (float) $data['price'];
         $package->fill([
             'name'            => $data['name'],
             'slug'            => $package->slug ?: Str::slug($data['name']) . '-' . Str::random(4),
             'description'     => $data['description'] ?? null,
-            'price'           => $data['price'],
+            'price'           => $price,
+            'plan_amount'     => $price,
             'currency'        => strtoupper($data['currency']),
             'interval'        => $data['interval'],
+            'plan_unit'       => str_contains(strtolower($data['interval']), 'year') ? 'years' : 'months',
+            'plan_duration'   => 1,
+            'free'            => ($price <= 0),
             'trial_days'      => $data['trial_days'] ?? 0,
-            // An empty numeric limit means unlimited, stored as NULL.
             'max_accounts'    => $data['max_accounts'] ?? null,
             'max_flows'       => $data['max_flows'] ?? null,
             'max_automations' => $data['max_automations'] ?? null,
@@ -112,6 +116,7 @@ class PackageController extends Controller
             'is_active'       => (bool) ($data['is_active'] ?? false),
             'is_default'      => (bool) ($data['is_default'] ?? false),
             'is_featured'     => (bool) ($data['is_featured'] ?? false),
+            'is_highlighted'  => (bool) ($data['is_featured'] ?? false),
             'sort'            => $data['sort'] ?? 0,
         ]);
     }

@@ -111,6 +111,21 @@ class Package extends Model
     }
 
     /**
+     * Is this plan free? Returns true ONLY if price <= 0 and plan_amount <= 0.
+     */
+    public function getFreeAttribute(): bool
+    {
+        $planAmount  = isset($this->attributes['plan_amount']) ? (float) $this->attributes['plan_amount'] : 0.0;
+        $priceAmount = isset($this->attributes['price']) ? (float) $this->attributes['price'] : 0.0;
+
+        if ($planAmount > 0 || $priceAmount > 0) {
+            return false;
+        }
+
+        return (bool) ($this->attributes['free'] ?? true);
+    }
+
+    /**
      * The ACTUAL amount to charge / display for this plan, in the package's own
      * currency. An offer (discounted) price wins over plan_amount — the single
      * source of truth checkout, order creation and recurring renewals share.
@@ -119,7 +134,11 @@ class Package extends Model
      */
     public function chargeableAmount(): float
     {
-        $base = (float) ($this->plan_amount ?? $this->price ?? 0);
+        $planAmount  = isset($this->attributes['plan_amount']) ? (float) $this->attributes['plan_amount'] : 0.0;
+        $priceAmount = isset($this->attributes['price']) ? (float) $this->attributes['price'] : 0.0;
+
+        $base = ($planAmount > 0) ? $planAmount : $priceAmount;
+
         if ($this->free || $base <= 0) {
             return 0.0;
         }
