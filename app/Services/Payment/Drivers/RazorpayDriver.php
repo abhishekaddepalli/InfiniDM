@@ -51,12 +51,52 @@ class RazorpayDriver extends AbstractGatewayDriver
             $rzpOrder = $r->json();
 
             // Build the inline HTML form that opens checkout.js.
-            $html = view('checkout.razorpay-form', [
-                'key_id'    => $keyId,
-                'order'     => $order,
-                'rzpOrder'  => $rzpOrder,
-                'callback'  => $callbackUrl,
-            ])->render();
+            if (view()->exists('checkout.razorpay-form')) {
+                $html = view('checkout.razorpay-form', [
+                    'key_id'   => $keyId,
+                    'order'    => $order,
+                    'rzpOrder' => $rzpOrder,
+                    'callback' => $callbackUrl,
+                ])->render();
+            } else {
+                $rzpIdEnc = json_encode($rzpOrder['id'] ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $keyIdEnc = json_encode($keyId, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $amtEnc   = $amountMinor;
+                $curEnc   = json_encode(strtoupper($order->currency), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $nameEnc  = json_encode($order->customer_name ?: 'Customer', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $emailEnc = json_encode($order->customer_email ?: '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $cbEnc    = json_encode($callbackUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
+
+                $html = <<<HTML
+                <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+                <form id="rzp-auto-form" action="{$callbackUrl}" method="POST">
+                    <input type="hidden" name="razorpay_payment_id" id="rzp_p_id">
+                    <input type="hidden" name="razorpay_order_id" id="rzp_o_id" value="{$rzpOrder['id']}">
+                    <input type="hidden" name="razorpay_signature" id="rzp_sig">
+                </form>
+                <script>
+                    (function() {
+                        var rzp = new Razorpay({
+                            key: {$keyIdEnc},
+                            amount: {$amtEnc},
+                            currency: {$curEnc},
+                            order_id: {$rzpIdEnc},
+                            name: "InstaDM",
+                            description: "Order #{$order->order_number}",
+                            prefill: { name: {$nameEnc}, email: {$emailEnc} },
+                            theme: { color: "#E1306C" },
+                            handler: function(resp) {
+                                document.getElementById('rzp_p_id').value = resp.razorpay_payment_id;
+                                document.getElementById('rzp_o_id').value = resp.razorpay_order_id;
+                                document.getElementById('rzp_sig').value = resp.razorpay_signature;
+                                document.getElementById('rzp-auto-form').submit();
+                            }
+                        });
+                        rzp.open();
+                    })();
+                </script>
+                HTML;
+            }
             return PaymentResult::form($html, $rzpOrder['id'] ?? null, $rzpOrder);
         } catch (\Throwable $e) {
             return PaymentResult::failed('razorpay_exception: ' . $e->getMessage());
